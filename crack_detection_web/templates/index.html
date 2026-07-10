@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hệ thống Kiểm định Kết cấu</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}">
+</head>
+<body>
+
+<nav>
+    <div class="nav-brand"><span></span> Hệ Thống Kiểm Định Tự Động</div>
+    <a href="{{ url_for('index') }}" class="active">Phân tích</a>
+    <a href="{{ url_for('archive') }}">Kho lưu trữ</a>
+    <a href="{{ url_for('camera') }}">Camera</a>
+    <div class="nav-right">
+        {% if session.get('user_id') %}
+        <div class="nav-user">
+            <div class="nav-user-avatar">{{ session.get('user_name','?')[0] }}</div>
+            <span class="nav-user-name">{{ session.get('user_name') }}</span>
+        </div>
+        <form class="nav-logout-form" method="POST" action="{{ url_for('logout') }}">
+            <button type="submit" class="nav-logout-btn">Đăng xuất</button>
+        </form>
+        {% else %}
+        <a href="{{ url_for('register') }}" class="nav-auth-link">Đăng ký</a>
+        <a href="{{ url_for('login') }}" class="nav-auth-link">Đăng nhập</a>
+        {% endif %}
+    </div>
+</nav>
+
+<div class="page">
+    <div class="page-title">Kiểm định kết cấu tường</div>
+
+    <!-- Upload card -->
+    <div class="card">
+        <div class="card-header">
+            <h2>Tải lên dữ liệu</h2>
+        </div>
+        <div class="card-body">
+            <form method="POST" enctype="multipart/form-data" id="uploadForm">
+                <input type="file" id="fileInput" name="file"
+                       accept="image/*,video/*" style="display:none;" required>
+
+                <!-- Drop zone -->
+                <div class="upload-zone" id="uploadZone"
+                     onclick="document.getElementById('fileInput').click()">
+                    <svg class="upload-icon" viewBox="0 0 24 24" fill="none"
+                         stroke="currentColor" stroke-width="1.5">
+                        <path d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2
+                                 M12 12V4M8 8l4-4 4 4"/>
+                    </svg>
+                    <strong>Nhấn để chọn ảnh hoặc video</strong>
+                    <p>Định dạng hỗ trợ: JPG, PNG, MP4, AVI, MOV</p>
+                </div>
+
+                <!-- Preview row -->
+                <div class="file-preview" id="filePreview">
+                    <img id="previewThumb" class="preview-thumb" src="" alt="">
+                    <div class="preview-info">
+                        <div class="preview-name" id="previewName"></div>
+                        <div class="preview-size" id="previewSize"></div>
+                    </div>
+                    <button type="button" class="preview-clear"
+                            onclick="clearFile()" title="Hủy chọn">&times;</button>
+                </div>
+
+                <!-- Submit row -->
+                <div class="submit-row" id="submitRow">
+                    <button type="submit" class="btn-submit" id="submitBtn">
+                        Bắt đầu phân tích
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Result card -->
+    {% if output_file %}
+    {% if color == 'green' %}
+        {% set bc = '#16A34A' %}{% set pbg = '#F0FDF4' %}{% set pc = '#15803D' %}
+        {% set note = 'Không phát hiện hư hỏng đáng kể.' %}
+    {% elif color == 'blue' %}
+        {% set bc = '#2563EB' %}{% set pbg = '#EFF6FF' %}{% set pc = '#1D4ED8' %}
+        {% set note = 'Theo dõi định kỳ, chưa cần can thiệp ngay.' %}
+    {% elif color == 'orange' %}
+        {% set bc = '#D97706' %}{% set pbg = '#FFFBEB' %}{% set pc = '#B45309' %}
+        {% set note = 'Lập kế hoạch sửa chữa trong thời gian gần.' %}
+    {% else %}
+        {% set bc = '#DC2626' %}{% set pbg = '#FEF2F2' %}{% set pc = '#B91C1C' %}
+        {% set note = 'Cần kiểm tra và xử lý kết cấu ngay lập tức.' %}
+    {% endif %}
+
+    <div class="card">
+        <div class="card-header">
+            <h2>Kết quả phân tích</h2>
+            <a href="{{ url_for('archive') }}" class="link-archive">Xem trong kho lưu trữ &rarr;</a>
+        </div>
+        <div class="card-body">
+            <div class="result-grid">
+                <div class="metric-cell">
+                    <div class="metric-label">Diện tích bề mặt lỗi</div>
+                    <div class="metric-value" style="color:{{ bc }};">{{ percentage }}%</div>
+                    <div class="metric-bar-track">
+                        <div class="metric-bar-fill"
+                             style="width:{{ [percentage,100]|min }}%; background:{{ bc }};"></div>
+                    </div>
+                </div>
+                <div class="metric-cell">
+                    <div class="metric-label">Trạng thái kết cấu</div>
+                    <span class="status-pill"
+                          style="background:{{ pbg }}; color:{{ pc }};">{{ severity }}</span>
+                    <div class="metric-note">{{ note }}</div>
+                </div>
+            </div>
+
+            <div class="media-grid">
+                <div class="media-panel">
+                    <div class="media-label">Dữ liệu gốc</div>
+                    {% if is_video %}
+                        <video src="{{ url_for('static', filename='uploads/' + input_file) }}"
+                               controls></video>
+                    {% else %}
+                        <img src="{{ url_for('static', filename='uploads/' + input_file) }}"
+                             alt="Ảnh gốc">
+                    {% endif %}
+                </div>
+                <div class="media-panel">
+                    <div class="media-label">Kết quả phân vùng (AI)</div>
+                    {% if is_video %}
+                        <video src="{{ url_for('static', filename='uploads/' + output_file) }}"
+                               controls></video>
+                    {% else %}
+                        <img src="{{ url_for('static', filename='uploads/' + output_file) }}"
+                             alt="Kết quả AI">
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+const fileInput    = document.getElementById('fileInput');
+const uploadZone   = document.getElementById('uploadZone');
+const filePreview  = document.getElementById('filePreview');
+const submitRow    = document.getElementById('submitRow');
+const previewName  = document.getElementById('previewName');
+const previewSize  = document.getElementById('previewSize');
+const previewThumb = document.getElementById('previewThumb');
+
+function formatSize(bytes) {
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / 1024 / 1024).toFixed(1) + ' MB';
+}
+
+fileInput.addEventListener('change', function () {
+    const file = this.files[0];
+    if (!file) return;
+
+    previewName.textContent = file.name;
+    previewSize.textContent = formatSize(file.size) + ' — ' +
+        (file.type.startsWith('video') ? 'Video' : 'Ảnh');
+
+    if (file.type.startsWith('image')) {
+        previewThumb.src = URL.createObjectURL(file);
+        previewThumb.style.display = 'block';
+    } else {
+        previewThumb.src = '';
+        previewThumb.style.display = 'none';
+    }
+
+    filePreview.classList.add('show');
+    submitRow.classList.add('show');
+});
+
+function clearFile() {
+    fileInput.value = '';
+    filePreview.classList.remove('show');
+    submitRow.classList.remove('show');
+    previewThumb.src = '';
+}
+
+/* ✅ Submit event — disable SAU khi form đã gửi đi */
+document.getElementById('uploadForm').addEventListener('submit', function () {
+    const btn = document.getElementById('submitBtn');
+    btn.textContent = 'Đang xử lý...';
+    btn.classList.add('loading');
+    btn.disabled = true;
+});
+
+/* Drag & drop */
+uploadZone.addEventListener('dragover', e => {
+    e.preventDefault();
+    uploadZone.classList.add('dragover');
+});
+uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('dragover'));
+uploadZone.addEventListener('drop', e => {
+    e.preventDefault();
+    uploadZone.classList.remove('dragover');
+    if (e.dataTransfer.files.length) {
+        const transfer = new DataTransfer();
+        transfer.items.add(e.dataTransfer.files[0]);
+        fileInput.files = transfer.files;
+        fileInput.dispatchEvent(new Event('change'));
+    }
+});
+</script>
+
+</body>
+</html>
