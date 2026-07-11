@@ -5,7 +5,10 @@ dependencies = [
     "Flask",
     "opencv-python-headless",
     "numpy",
-    "imageio-ffmpeg"
+    "imageio-ffmpeg",
+    "ultralytics",
+    "torch",
+    "Pillow"
 ]
 
 [tool.vercel]
