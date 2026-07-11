@@ -29,11 +29,15 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 for d in [UPLOAD_FOLDER, SESSIONS_ROOT, os.path.dirname(USERS_FILE)]:
     os.makedirs(d, exist_ok=True)
 
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
 MODEL_PATH = os.path.join(
-    os.path.dirname(__file__),
-    'weights',
-    'best.pt'
+    BASE_DIR,
+    "weights",
+    "best.pt"
 )
+
+model = YOLO(MODEL_PATH)
 
 # ── Nhãn & mức độ ────────────────────────────────────────────────────────────
 
