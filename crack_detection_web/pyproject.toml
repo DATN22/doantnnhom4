@@ -1,2 +1,0 @@
-[tool.vercel]
-entrypoint = "crack_detection_web.app:app"
