@@ -1,7 +1,6 @@
+numpy
+opencv-python-headless
+ultralytics
 flask
 gunicorn
-ultralytics
-opencv-python-headless
-numpy
 imageio-ffmpeg
-werkzeug
