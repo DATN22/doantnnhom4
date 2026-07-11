@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Camera — Hệ Thống Kiểm Định Tự Động</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/camera.css') }}">
+</head>
+<body>
+
+<nav>
+    <div class="nav-brand"><span></span> Hệ Thống Kiểm Định Tự Động</div>
+    <a href="{{ url_for('index') }}">Phân tích</a>
+    <a href="{{ url_for('archive') }}">Kho lưu trữ</a>
+    <a href="{{ url_for('camera') }}" class="active">Camera</a>
+    <div class="nav-right">
+        {% if session.get('user_id') %}
+        <a href="{{ url_for('account') }}" class="nav-user">
+            <div class="nav-user-avatar">{{ session.get('user_name','?')[0] }}</div>
+            <span class="nav-user-name">{{ session.get('user_name') }}</span>
+        </a>
+        <form class="nav-logout-form" method="POST" action="{{ url_for('logout') }}">
+            <button type="submit" class="nav-logout-btn">Đăng xuất</button>
+        </form>
+        {% else %}
+        <a href="{{ url_for('register') }}" class="nav-auth-link">Đăng ký</a>
+        <a href="{{ url_for('login') }}" class="nav-auth-link">Đăng nhập</a>
+        {% endif %}
+    </div>
+</nav>
+
+<div class="page">
+    <div class="page-title">Quét nhận diện qua camera</div>
+
+    <!-- 2 panel: camera trực tiếp | kết quả AI -->
+    <div class="cam-layout">
+
+        <!-- Panel trái: video feed -->
+        <div class="cam-panel">
+            <div class="cam-panel-header">
+                <span>Camera trực tiếp</span>
+                <div class="cam-switch-row">
+                    Camera:
+                    <select id="camSelect" onchange="switchCamera(this.value)">
+                        <option value="user">Trước</option>
+                        <option value="environment" selected>Sau</option>
+                    </select>
+                </div>
+            </div>
+            <video id="camVideo" autoplay muted playsinline></video>
+            <canvas id="capCanvas" style="display:none;"></canvas>
+        </div>
+
+        <!-- Panel phải: kết quả annotated -->
+        <div class="cam-panel">
+            <div class="cam-panel-header">
+                <span>Kết quả AI (cập nhật liên tục)</span>
+            </div>
+            <!-- Placeholder hiện khi chưa có ảnh -->
+            <div class="result-placeholder" id="resultPlaceholder">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
+                    <rect x="3" y="3" width="18" height="18" rx="2"/>
+                    <circle cx="8.5" cy="8.5" r="1.5"/>
+                    <path d="M21 15l-5-5L5 21"/>
+                </svg>
+                <span>Chờ kết quả phân tích...</span>
+            </div>
+            <!-- Ảnh annotated — chỉ hiện sau frame đầu tiên -->
+            <img id="annotatedImg" class="result-img" src="" alt="Kết quả AI">
+        </div>
+
+    </div>
+
+    <!-- Controls -->
+    <div class="controls">
+        <button class="btn-cam primary" id="btnStart" onclick="startCamera()">Bật camera</button>
+        <button class="btn-cam" id="btnStop" onclick="stopCamera()" disabled>Dừng</button>
+
+        <div class="scan-status">
+            <span class="scan-dot" id="scanDot"></span>
+            <span id="scanStatus">Chưa kết nối camera</span>
+        </div>
+
+        <div class="interval-label">
+            Tần suất quét:
+            <select id="intervalSel" onchange="onIntervalChange()">
+                <option value="500">2 lần/giây</option>
+                <option value="1000" selected>1 lần/giây</option>
+                <option value="2000">0.5 lần/giây</option>
+                <option value="3000">Chậm (3s)</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Kết quả nhận diện -->
+    <div class="results-panel">
+        <div class="results-header">
+            <div class="overall-dot" id="overallDot"></div>
+            <span class="overall-text" id="overallText">Chờ kết quả quét...</span>
+        </div>
+        <div class="results-body">
+            <div class="results-empty" id="resultsEmpty">
+                Bật camera và bắt đầu quét để xem kết quả nhận diện.
+            </div>
+            <div id="detList" style="display:none;"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+/* ── Config màu — đồng bộ với session.html / archive.html ── */
+const COLOR_MAP = {
+    green:  { hex: '#16A34A', sev: 'sev-green',
+              text: 'An toàn — Không phát hiện hư hỏng đáng kể' },
+    blue:   { hex: '#2563EB', sev: 'sev-blue',
+              text: 'Nhẹ — Theo dõi định kỳ, chưa cần can thiệp' },
+    orange: { hex: '#D97706', sev: 'sev-orange',
+              text: 'Trung bình — Lên kế hoạch sửa chữa' },
+    red:    { hex: '#DC2626', sev: 'sev-red',
+              text: 'Nghiêm trọng — Cần kiểm tra và xử lý ngay' },
+};
+
+/* ── State ── */
+let stream      = null;
+let scanTimer   = null;
+let isAnalyzing = false;
+let facingMode  = 'environment';
+
+/* ── DOM refs ── */
+const video       = document.getElementById('camVideo');
+const canvas      = document.getElementById('capCanvas');
+const ctx         = canvas.getContext('2d');
+const annotatedImg= document.getElementById('annotatedImg');
+const placeholder = document.getElementById('resultPlaceholder');
+const btnStart    = document.getElementById('btnStart');
+const btnStop     = document.getElementById('btnStop');
+const scanDot     = document.getElementById('scanDot');
+const scanStatus  = document.getElementById('scanStatus');
+const overallDot  = document.getElementById('overallDot');
+const overallText = document.getElementById('overallText');
+const detList     = document.getElementById('detList');
+const resultsEmpty= document.getElementById('resultsEmpty');
+
+/* ── Camera ── */
+async function startCamera() {
+    try {
+        stream = await navigator.mediaDevices.getUserMedia({
+            video: {
+                facingMode: facingMode,
+                width:  { ideal: 1280 },
+                height: { ideal: 720 },
+            },
+            audio: false,
+        });
+        video.srcObject = stream;
+        await video.play();
+
+        btnStart.disabled = true;
+        btnStop.disabled  = false;
+        scanDot.className = 'scan-dot live';
+        scanStatus.textContent = 'Đang quét...';
+        startScan();
+    } catch (e) {
+        scanDot.className = 'scan-dot';
+        scanStatus.textContent = 'Lỗi: ' + e.message;
+    }
+}
+
+function stopCamera() {
+    if (stream) {
+        stream.getTracks().forEach(t => t.stop());
+        stream = null;
+    }
+    clearInterval(scanTimer);
+    scanTimer = null;
+
+    btnStart.disabled = false;
+    btnStop.disabled  = true;
+    scanDot.className = 'scan-dot';
+    scanStatus.textContent = 'Đã dừng';
+}
+
+async function switchCamera(mode) {
+    facingMode = mode;
+    if (stream) {
+        stopCamera();
+        await startCamera();
+    }
+}
+
+/* ── Scan loop ── */
+function startScan() {
+    clearInterval(scanTimer);
+    const ms = parseInt(document.getElementById('intervalSel').value);
+    scanTimer = setInterval(doScan, ms);
+}
+
+function onIntervalChange() {
+    if (stream) startScan();
+}
+
+async function doScan() {
+    if (isAnalyzing || !stream) return;
+    if (video.readyState < 2)   return;
+
+    isAnalyzing = true;
+    scanDot.className = 'scan-dot busy';
+
+    canvas.width  = video.videoWidth  || 640;
+    canvas.height = video.videoHeight || 480;
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    const b64 = canvas.toDataURL('image/jpeg', 0.82);
+
+    try {
+        const resp = await fetch('/analyze-frame', {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify({ image: b64 }),
+        });
+        if (!resp.ok) throw new Error('HTTP ' + resp.status);
+        const data = await resp.json();
+
+        /* Hiện ảnh annotated, ẩn placeholder */
+        if (data.annotated) {
+            annotatedImg.src      = data.annotated;
+            annotatedImg.style.display  = 'block';
+            placeholder.style.display   = 'none';
+        }
+
+        renderResults(data.detections || [], data.overall_color || 'green');
+
+        const ts = new Date().toLocaleTimeString('vi-VN');
+        scanStatus.textContent = 'Cập nhật lúc ' + ts;
+    } catch (e) {
+        scanStatus.textContent = 'Lỗi: ' + e.message;
+    }
+
+    scanDot.className = 'scan-dot live';
+    isAnalyzing = false;
+}
+
+/* ── Render kết quả ── */
+function renderResults(dets, overall) {
+    const c = COLOR_MAP[overall] || COLOR_MAP.green;
+
+    overallDot.style.background  = c.hex;
+    overallText.style.color      = c.hex;
+    overallText.textContent      = c.text;
+
+    if (!dets.length) {
+        resultsEmpty.style.display = 'block';
+        detList.style.display      = 'none';
+        resultsEmpty.textContent   = 'Không phát hiện lỗi trong frame này.';
+        return;
+    }
+
+    resultsEmpty.style.display = 'none';
+    detList.style.display      = 'block';
+
+    detList.innerHTML = dets.map(d => {
+        const dc   = COLOR_MAP[d.color] || COLOR_MAP.green;
+        const barW = Math.min(d.pct, 100).toFixed(1);
+        return `
+        <div class="det-row">
+            <div class="det-dot"  style="background:${dc.hex};"></div>
+            <div class="det-name">${d.label_vi}</div>
+            <div class="det-count">${d.count} vùng</div>
+            <div class="det-bar-track">
+                <div class="det-bar-fill" style="width:${barW}%; background:${dc.hex};"></div>
+            </div>
+            <div class="det-pct" style="color:${dc.hex};">${d.pct}%</div>
+            <span class="det-sev ${dc.sev}">${d.severity}</span>
+        </div>`;
+    }).join('');
+}
+</script>
+
+</body>
+</html>

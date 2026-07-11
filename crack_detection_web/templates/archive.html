@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kho lưu trữ — CrackScan</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/archive.css') }}">
+</head>
+<body>
+
+<nav>
+    <div class="nav-brand"><span></span> Hệ Thống Kiểm Định Tự Động</div>
+    <a href="{{ url_for('index') }}">Phân tích</a>
+    <a href="{{ url_for('archive') }}" class="active">Kho lưu trữ</a>
+    <a href="{{ url_for('camera') }}">Camera</a>
+    <div class="nav-right">
+        {% if session.get('user_id') %}
+        <a href="{{ url_for('account') }}" class="nav-user">
+            <div class="nav-user-avatar">{{ session.get('user_name','?')[0] }}</div>
+            <span class="nav-user-name">{{ session.get('user_name') }}</span>
+        </a>
+        <form class="nav-logout-form" method="POST" action="{{ url_for('logout') }}">
+            <button type="submit" class="nav-logout-btn">Đăng xuất</button>
+        </form>
+        {% else %}
+        <a href="{{ url_for('register') }}" class="nav-auth-link">Đăng ký</a>
+        <a href="{{ url_for('login') }}" class="nav-auth-link">Đăng nhập</a>
+        {% endif %}
+    </div>
+</nav>
+
+<div class="page">
+
+    <div class="toolbar">
+        <span class="toolbar-title">Kho lưu trữ</span>
+        <span class="count" id="countLabel">{{ records|length }} bản ghi</span>
+    </div>
+
+    <div class="filters">
+        <input type="text" id="searchInput" placeholder="Tìm theo tên..." oninput="doFilter()">
+        <select id="filterSeverity" onchange="doFilter()">
+            <option value="">Tất cả mức độ</option>
+            <option value="green">An toàn</option>
+            <option value="blue">Nhẹ</option>
+            <option value="orange">Trung bình</option>
+            <option value="red">Nghiêm trọng</option>
+        </select>
+        <select id="filterType" onchange="doFilter()">
+            <option value="">Tất cả loại</option>
+            <option value="image">Ảnh</option>
+            <option value="video">Video</option>
+        </select>
+    </div>
+
+    {% if records %}
+    <div class="table-wrap">
+        <table id="recordTable">
+            <thead>
+                <tr>
+                    <th>Xem trước</th>
+                    <th>Tên / Thời gian</th>
+                    <th>Loại</th>
+                    <th>Lỗi phát hiện</th>
+                    <th>Đánh giá chung</th>
+                    <th>Thao tác</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for r in records %}
+            <tr data-name="{{ r.name|lower }}"
+                data-color="{{ r.overall_color }}"
+                data-type="{{ 'video' if r.is_video else 'image' }}">
+
+                <!-- Xem trước -->
+                <td>
+                    {% if r.is_video %}
+                        <video class="thumb"
+                               src="{{ url_for('static', filename='sessions/' + r.annotated) }}"
+                               muted preload="metadata"></video>
+                    {% else %}
+                        <img class="thumb"
+                             src="{{ url_for('static', filename='sessions/' + r.annotated) }}"
+                             alt="{{ r.name }}">
+                    {% endif %}
+                </td>
+
+                <!-- Tên -->
+                <td>
+                    <div class="label-wrap">
+                        <div class="label-text" id="name-{{ r.id }}">{{ r.name }}</div>
+                        <div class="label-sub">{{ r.created_at }}</div>
+                    </div>
+                </td>
+
+                <!-- Loại -->
+                <td><span class="badge badge-type">{{ 'Video' if r.is_video else 'Ảnh' }}</span></td>
+
+                <!-- Lỗi phát hiện -->
+                <td>
+                    {% if r.label_results %}
+                        <div style="display:flex; flex-direction:column; gap:4px;">
+                        {% for label, info in r.label_results.items() %}
+                            <div style="display:flex; align-items:center; gap:6px;">
+                                <span class="dot-sml" style="background:
+                                    {% if info.color=='green' %}#16A34A
+                                    {% elif info.color=='blue' %}#2563EB
+                                    {% elif info.color=='orange' %}#D97706
+                                    {% else %}#DC2626{% endif %};"></span>
+                                <span style="font-size:12px;">{{ info.label_vi }}</span>
+                                <span style="font-size:11px; color:var(--text-muted);">{{ info.percentage }}%</span>
+                            </div>
+                        {% endfor %}
+                        </div>
+                    {% else %}
+                        <span style="font-size:12px; color:var(--text-muted);">Không phát hiện</span>
+                    {% endif %}
+                </td>
+
+                <!-- Đánh giá chung -->
+                <td>
+                    {% set oc = r.overall_color %}
+                    <span class="badge"
+                        style="
+                        {% if oc=='green'  %}background:#F0FDF4;color:#15803D;
+                        {% elif oc=='blue' %}background:#EFF6FF;color:#1D4ED8;
+                        {% elif oc=='orange'%}background:#FFFBEB;color:#B45309;
+                        {% else            %}background:#FEF2F2;color:#B91C1C;{% endif %}">
+                        {% if oc=='green' %}An toàn
+                        {% elif oc=='blue' %}Nhẹ
+                        {% elif oc=='orange' %}Trung bình
+                        {% else %}Nghiêm trọng{% endif %}
+                    </span>
+                </td>
+
+                <!-- Thao tác -->
+                <td>
+                    <div class="actions">
+                        <a href="{{ url_for('session_detail', session_id=r.id) }}"
+                           class="btn btn-primary">Xem chi tiết</a>
+                        <button class="btn"
+                                onclick="openRename('{{ r.id }}','{{ r.name }}')">Đổi tên</button>
+                        <form method="POST"
+                              action="{{ url_for('delete_record', sid=r.id) }}"
+                              onsubmit="return confirm('Xóa bản ghi và toàn bộ dữ liệu của ({{ r.name }})?')"
+                              style="display:inline;">
+                            <button type="submit" class="btn btn-danger">Xóa</button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="table-wrap">
+        <div class="empty">
+            <p>Chưa có bản ghi nào. Tải lên và phân tích để bắt đầu.</p>
+            <a href="{{ url_for('index') }}">Phân tích ngay</a>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Modal đổi tên -->
+<div class="overlay" id="renameOverlay">
+    <div class="modal">
+        <div class="modal-head">Đổi tên bản ghi</div>
+        <div class="modal-body">
+            <label>Tên mới</label>
+            <input type="text" id="renameInput" placeholder="Nhập tên...">
+        </div>
+        <div class="modal-foot">
+            <button class="btn" onclick="closeModal()">Hủy</button>
+            <button class="btn btn-primary" onclick="submitRename()">Lưu</button>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentId = null;
+
+function openRename(id, name) {
+    currentId = id;
+    document.getElementById('renameInput').value = name;
+    document.getElementById('renameOverlay').classList.add('show');
+    setTimeout(() => document.getElementById('renameInput').focus(), 60);
+}
+function closeModal() {
+    document.getElementById('renameOverlay').classList.remove('show');
+    currentId = null;
+}
+async function submitRename() {
+    const name = document.getElementById('renameInput').value.trim();
+    if (!name) return;
+    const fd = new FormData();
+    fd.append('name', name);
+    const res  = await fetch(`/archive/rename/${currentId}`, { method:'POST', body:fd });
+    const data = await res.json();
+    if (data.success) {
+        document.getElementById('name-' + currentId).textContent = data.name;
+        document.querySelectorAll('tbody tr').forEach(tr => {
+            const btn = tr.querySelector(`button[onclick*="${currentId}"]`);
+            if (btn) {
+                tr.dataset.name = data.name.toLowerCase();
+                btn.setAttribute('onclick', `openRename('${currentId}','${data.name}')`);
+            }
+        });
+        closeModal();
+    }
+}
+document.getElementById('renameOverlay').addEventListener('click', e => {
+    if (e.target === document.getElementById('renameOverlay')) closeModal();
+});
+document.getElementById('renameInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter') submitRename();
+    if (e.key === 'Escape') closeModal();
+});
+
+function doFilter() {
+    const q     = document.getElementById('searchInput').value.toLowerCase();
+    const color = document.getElementById('filterSeverity').value;
+    const type  = document.getElementById('filterType').value;
+    let visible = 0;
+    document.querySelectorAll('#recordTable tbody tr').forEach(tr => {
+        const ok = (!q     || tr.dataset.name.includes(q))
+                && (!color || tr.dataset.color === color)
+                && (!type  || tr.dataset.type  === type);
+        tr.classList.toggle('hidden', !ok);
+        if (ok) visible++;
+    });
+    document.getElementById('countLabel').textContent = visible + ' bản ghi';
+}
+</script>
+
+</body>
+</html>

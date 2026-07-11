@@ -1,0 +1,206 @@
+/* =============================================
+   INDEX.CSS — Trang phân tích
+   ============================================= */
+
+.page-title {
+    font-size: 25px;
+    font-weight: 600;
+    color: #000000;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+}
+
+/* ── UPLOAD ZONE ── */
+.upload-zone {
+    border: 1.5px dashed var(--border);
+    border-radius: var(--radius);
+    padding: 40px 24px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color .15s, background .15s;
+    user-select: none;
+}
+.upload-zone:hover,
+.upload-zone.dragover {
+    border-color: var(--accent);
+    background: var(--accent-dim);
+}
+.upload-icon {
+    width: 38px; height: 38px;
+    margin: 0 auto 12px;
+    color: var(--text-muted);
+    display: block;
+}
+.upload-zone strong {
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+}
+.upload-zone p {
+    font-size: 15px;
+    color: var(--text-muted);
+}
+
+/* ── FILE PREVIEW ── */
+.file-preview {
+    display: none;
+    align-items: center;
+    gap: 14px;
+    margin-top: 14px;
+    padding: 12px 16px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: #FAFBFC;
+}
+.file-preview.show { display: flex; }
+.preview-thumb {
+    width: 72px; height: 48px;
+    object-fit: cover;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    background: #111;
+    flex-shrink: 0;
+    display: block;
+}
+.preview-info { flex: 1; min-width: 0; }
+.preview-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.preview-size {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 2px;
+}
+.preview-clear {
+    border: none;
+    background: none;
+    color: var(--text-muted);
+    font-size: 20px;
+    line-height: 1;
+    cursor: pointer;
+    padding: 2px 6px;
+    border-radius: 4px;
+    transition: color .12s, background .12s;
+    flex-shrink: 0;
+}
+.preview-clear:hover { color: #DC2626; background: #FEF2F2; }
+
+/* ── SUBMIT ROW ── */
+.submit-row {
+    display: none;
+    justify-content: flex-end;
+    margin-top: 14px;
+}
+.submit-row.show { display: flex; }
+.btn-submit {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius);
+    padding: 9px 28px;
+    font-size: 15px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    letter-spacing: .01em;
+    transition: background .15s;
+}
+.btn-submit:hover { background: #1D4ED8; }
+.btn-submit:disabled { background: var(--text-muted); cursor: not-allowed; }
+.btn-submit.loading::after {
+    content: '';
+    display: inline-block;
+    width: 12px; height: 12px;
+    border: 2px solid rgba(255,255,255,.4);
+    border-top-color: #fff;
+    border-radius: 50%;
+    margin-left: 8px;
+    animation: spin .7s linear infinite;
+    vertical-align: middle;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── RESULT ── */
+.result-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-bottom: 20px;
+}
+.metric-cell {
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 18px;
+}
+.metric-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+}
+.metric-value {
+    font-size: 30px;
+    font-weight: 700;
+    line-height: 1;
+    margin-bottom: 10px;
+}
+.metric-bar-track {
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+}
+.metric-bar-fill { height: 100%; border-radius: 2px; }
+.status-pill {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 3px;
+    font-size: 12px;
+    font-weight: 600;
+}
+.metric-note {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 8px;
+}
+
+/* ── MEDIA GRID ── */
+.media-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+.media-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+}
+.media-panel img,
+.media-panel video {
+    width: 100%;
+    display: block;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    background: #000;
+}
+
+.link-archive {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--accent);
+    text-decoration: none;
+}
+.link-archive:hover { text-decoration: underline; }

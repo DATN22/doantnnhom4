@@ -1,0 +1,254 @@
+/* =============================================
+   CAMERA.CSS — Trang quét camera
+   ============================================= */
+
+.page { max-width: 1000px; }
+
+.page-title {
+    font-size: 25px;
+    font-weight: 600;
+    color: #000000;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+}
+
+/* ── CAMERA LAYOUT ── */
+.cam-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+@media (max-width: 640px) {
+    .cam-layout { grid-template-columns: 1fr; }
+}
+
+.cam-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+}
+.cam-panel-header {
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border);
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 38px;
+}
+
+/* Video feed */
+.cam-panel video {
+    width: 100%;
+    display: block;
+    background: #0F1923;
+    aspect-ratio: 4/3;
+    object-fit: cover;
+}
+
+/* Kết quả AI — dùng div placeholder thay vì <img> rỗng */
+.result-placeholder {
+    width: 100%;
+    aspect-ratio: 4/3;
+    background: #0F1923;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    color: #3A4A5C;
+    font-size: 20px;
+    font-weight: 500;
+}
+.result-placeholder svg {
+    width: 120px; height: 120px;
+    opacity: .8;
+}
+.result-img {
+    width: 100%;
+    aspect-ratio: 4/3;
+    object-fit: contain;
+    background: #0F1923;
+    display: none;       /* ẩn cho đến khi có kết quả đầu tiên */
+}
+
+/* ── CAMERA SWITCH ── */
+.cam-switch-row {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    font-size: 12px;
+    color: var(--text-muted);
+}
+.cam-switch-row select {
+    border: 1px solid var(--nav-border);
+    border-radius: 4px;
+    padding: 2px 6px;
+    font-size: 12px;
+    font-family: inherit;
+    background: var(--nav-bg);
+    color: #fff;
+    outline: none;
+    cursor: pointer;
+}
+
+/* ── CONTROLS BAR ── */
+.controls {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+}
+
+.btn-cam {
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface);
+    color: var(--text-secondary);
+    font-size: 15px;
+    font-weight: 500;
+    font-family: inherit;
+    padding: 7px 18px;
+    cursor: pointer;
+    transition: background .12s, color .12s, border-color .12s;
+    white-space: nowrap;
+}
+.btn-cam:hover { background: #F3F4F6; color: var(--text-primary); }
+.btn-cam.primary {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+}
+.btn-cam.primary:hover { background: #1D4ED8; border-color: #1D4ED8; }
+.btn-cam:disabled { opacity: .4; cursor: not-allowed; }
+
+.scan-status {
+    flex: 1;
+    font-size: 15px;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    min-width: 0;
+}
+.scan-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: #374151;
+    flex-shrink: 0;
+    transition: background .3s;
+}
+.scan-dot.live { background: #16A34A; animation: pulse 1.4s infinite; }
+.scan-dot.busy { background: #D97706; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+.interval-label {
+    font-size: 15px;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+}
+.interval-label select {
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 5px 8px;
+    font-size: 15px;
+    font-family: inherit;
+    background: var(--bg);
+    color: var(--text-primary);
+    outline: none;
+    cursor: pointer;
+}
+.interval-label select:focus { border-color: var(--accent); }
+
+/* ── RESULTS PANEL ── */
+.results-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+}
+.results-header {
+    padding: 13px 18px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 46px;
+}
+.overall-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: #D1D5DB;
+    flex-shrink: 0;
+    transition: background .3s;
+}
+.overall-text {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-primary);
+    transition: color .3s;
+}
+.results-body { padding: 14px 18px; }
+.results-empty {
+    font-size: 15px;
+    color: var(--text-muted);
+    text-align: center;
+    padding: 20px 0;
+}
+
+/* ── DETECTION ROW ── */
+.det-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+}
+.det-row:last-child { border-bottom: none; }
+.det-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+.det-name { font-size: 13px; font-weight: 600; flex: 1; color: var(--text-primary); }
+.det-count { font-size: 11px; color: var(--text-muted); white-space: nowrap; }
+.det-bar-track {
+    width: 72px; height: 3px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+.det-bar-fill { height: 100%; border-radius: 2px; transition: width .4s ease; }
+.det-pct {
+    font-size: 14px;
+    font-weight: 700;
+    min-width: 46px;
+    text-align: right;
+    white-space: nowrap;
+}
+.det-sev {
+    display: inline-block;
+    padding: 2px 9px;
+    border-radius: 3px;
+    font-size: 11px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+/* severity pill colors — dùng chung pattern với session/archive */
+.sev-green  { background:#F0FDF4; color:#15803D; }
+.sev-blue   { background:#EFF6FF; color:#1D4ED8; }
+.sev-orange { background:#FFFBEB; color:#B45309; }
+.sev-red    { background:#FEF2F2; color:#B91C1C; }
