@@ -1,0 +1,15 @@
+[project]
+name = "doantnnhom4"
+version = "0.1.0"
+dependencies = [
+    "Flask",
+    "opencv-python-headless",
+    "numpy",
+    "imageio-ffmpeg",
+    "ultralytics",
+    "torch",
+    "Pillow"
+]
+
+[tool.vercel]
+entrypoint = "crack_detection_web.app:app"
