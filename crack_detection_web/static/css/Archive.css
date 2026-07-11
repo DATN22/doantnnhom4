@@ -1,0 +1,275 @@
+/* =============================================
+   ARCHIVE.CSS — Trang kho lưu trữ
+   ============================================= */
+
+.page { max-width: 1200px; }
+
+/* ── TOOLBAR ── */
+.toolbar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+.toolbar-title {
+    font-size: 25px;
+    font-weight: 600;
+    color: var(--text-primary);
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    flex: 1;
+}
+.count {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-muted);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 3px 10px;
+}
+
+/* ── FILTERS ── */
+.filters {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 18px;
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    align-items: center;
+}
+.filters input,
+.filters select {
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 7px 12px;
+    font-size: 15px;
+    font-family: inherit;
+    color: var(--text-primary);
+    background: var(--bg);
+    outline: none;
+    transition: border-color .15s;
+}
+.filters input { flex: 1; }
+.filters input:focus,
+.filters select:focus { border-color: var(--accent); background: #fff; }
+.filters select { cursor: pointer; }
+
+/* ── TABLE ── */
+.table-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+}
+table { width: 100%; border-collapse: collapse; }
+thead tr {
+    background: #F9FAFB;
+    border-bottom: 1px solid var(--border);
+}
+th {
+    padding: 10px 16px;
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--text-primary);
+    text-align: left;
+    white-space: nowrap;
+}
+td {
+    padding: 15px 16px;
+    border-bottom: 1px solid var(--border);
+    font-size: 15px;
+    vertical-align: middle;
+}
+tbody tr:last-child td { border-bottom: none; }
+tbody tr:hover { background: #FAFBFC; }
+
+/* ── THUMBNAIL ── */
+.thumb {
+    width: 68px; height: 46px;
+    object-fit: cover;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    background: #111;
+    display: block;
+    cursor: pointer;
+}
+
+/* ── LABEL CELL (Tên / Thời gian) ── */
+.label-cell {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+}
+.label-wrap {
+    /* Cho phép cột Tên co giãn, KHÔNG bị tràn sang cột khác */
+    min-width: 0;
+    word-break: break-word;   /* xuống dòng khi tên quá dài */
+    overflow-wrap: break-word;
+}
+.label-text {
+    font-weight: 500;
+    color: var(--text-primary);
+    /* Không dùng white-space: nowrap — để tự xuống dòng */
+    line-height: 1.4;
+}
+.label-sub {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 2px;
+    white-space: nowrap; /* Thời gian giữ nguyên 1 dòng */
+}
+
+/* Cột Tên/Thời gian có độ rộng tối thiểu và tối đa */
+td:nth-child(2) {
+    min-width: 140px;
+    max-width: 260px;
+}
+
+/* ── BADGE ── */
+.badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: .02em;
+    white-space: nowrap;
+}
+.badge-type { background: #F3F4F6; color: #6B7280; }
+
+/* ── PCT CELL ── */
+.pct-cell { white-space: nowrap; }
+.pct-num { font-size: 15px; font-weight: 700; }
+.pct-bar-track {
+    width: 80px; height: 3px;
+    background: var(--border);
+    border-radius: 2px;
+    margin-top: 4px;
+    overflow: hidden;
+}
+.pct-bar-fill { height: 100%; border-radius: 2px; }
+
+/* ── ACTIONS ── */
+.actions { display: flex; gap: 6px; flex-wrap: wrap; }
+
+/* ── EMPTY ── */
+.empty {
+    padding: 64px 24px;
+    text-align: center;
+    color: var(--text-muted);
+}
+.empty p { margin-bottom: 16px; font-size: 15px; }
+.empty a {
+    display: inline-block;
+    background: var(--accent);
+    color: #fff;
+    text-decoration: none;
+    border-radius: var(--radius);
+    padding: 8px 20px;
+    font-size: 15px;
+    font-weight: 500;
+}
+
+/* ── MODAL ── */
+.overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.4);
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+}
+.overlay.show { display: flex; }
+.modal {
+    background: var(--surface);
+    border-radius: 8px;
+    width: 420px;
+    max-width: 92vw;
+    box-shadow: 0 16px 48px rgba(0,0,0,.18);
+    overflow: hidden;
+}
+.modal-head {
+    padding: 18px 22px 16px;
+    border-bottom: 1px solid var(--border);
+    font-size: 14px;
+    font-weight: 600;
+}
+.modal-body { padding: 20px 22px; }
+.modal-body label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+}
+.modal-body input {
+    width: 100%;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 9px 12px;
+    font-size: 14px;
+    font-family: inherit;
+    outline: none;
+    transition: border-color .15s;
+}
+.modal-body input:focus { border-color: var(--accent); }
+.modal-foot {
+    padding: 14px 22px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+/* ── LIGHTBOX ── */
+.lightbox {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.85);
+    z-index: 300;
+    align-items: center;
+    justify-content: center;
+}
+.lightbox.show { display: flex; }
+.lightbox-inner {
+    max-width: 90vw;
+    max-height: 90vh;
+    position: relative;
+}
+.lightbox-inner img,
+.lightbox-inner video {
+    max-width: 90vw;
+    max-height: 85vh;
+    border-radius: 4px;
+    display: block;
+}
+.lightbox-close {
+    position: absolute;
+    top: -36px; right: 0;
+    color: #fff;
+    font-size: 15px;
+    cursor: pointer;
+    font-weight: 500;
+    opacity: .7;
+    transition: opacity .15s;
+}
+.lightbox-close:hover { opacity: 1; }
+
+/* ── FILTER HIDDEN ── */
+tr.hidden { display: none; }
+/* Dot nhỏ cho từng nhãn trong bảng archive */
+.dot-sml {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    display: inline-block;
+    flex-shrink: 0;
+}
